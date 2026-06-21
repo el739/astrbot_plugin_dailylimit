@@ -792,15 +792,8 @@ class WebServer:
         limits_config = config["limits"]
 
         return {
-            "default_daily_limit": limits_config.get("default_daily_limit", 20),
-            "default_user_daily_limit": limits_config.get(
-                "default_user_daily_limit",
-                limits_config.get("default_daily_limit", 20),
-            ),
-            "default_group_daily_limit": limits_config.get(
-                "default_group_daily_limit",
-                limits_config.get("default_daily_limit", 20),
-            ),
+            "default_user_daily_limit": limits_config["default_user_daily_limit"],
+            "default_group_daily_limit": limits_config["default_group_daily_limit"],
             "default_group_mode": limits_config.get("default_group_mode", "shared"),
             "exempt_users": limits_config["exempt_users"],
             "priority_users": limits_config.get("priority_users", []),
@@ -842,7 +835,6 @@ class WebServer:
 
     def _update_default_limits(self, config_data):
         """更新默认限制配置"""
-        self._update_default_limit(config_data, "default_daily_limit", "默认每日限制")
         self._update_default_limit(
             config_data, "default_user_daily_limit", "默认用户每日限制"
         )
@@ -861,6 +853,18 @@ class WebServer:
             return
 
         raise ValueError("默认群聊模式必须是 shared 或 individual")
+
+    def _update_priority_multiplier(self, config_data):
+        """更新优先级倍数配置"""
+        if "priority_multiplier" not in config_data:
+            return
+
+        multiplier = config_data["priority_multiplier"]
+        if isinstance(multiplier, (int, float)) and multiplier >= 1:
+            self.plugin.config["limits"]["priority_multiplier"] = multiplier
+            return
+
+        raise ValueError("优先级倍数必须是大于或等于1的数字")
 
     def _update_user_list(self, config_data, list_name, config_key):
         """
@@ -1020,6 +1024,7 @@ class WebServer:
         """
         self._update_default_limits(config_data)
         self._update_default_group_mode(config_data)
+        self._update_priority_multiplier(config_data)
 
         # 更新用户列表
         self._update_user_list(config_data, "exempt_users", "exempt_users")

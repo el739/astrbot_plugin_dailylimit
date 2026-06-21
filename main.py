@@ -2,6 +2,7 @@ import asyncio
 import datetime
 import importlib.util
 import json
+import math
 import os
 import sys
 import time
@@ -1125,9 +1126,14 @@ class DailyLimitPlugin(star.Star):
             # 优先级用户在任何群聊中只受特定限制，不参与特定群聊限制
             if user_id_str in self.user_limits:
                 return self.user_limits[user_id_str]
-            return self.config["limits"].get(
-                "default_user_daily_limit",
-                self.config["limits"].get("default_daily_limit", 20),
+            multiplier = self.config["limits"].get("priority_multiplier", 2)
+            try:
+                multiplier = float(multiplier)
+            except (TypeError, ValueError):
+                multiplier = 2
+            return max(
+                1,
+                math.ceil(self.config["limits"]["default_user_daily_limit"] * multiplier),
             )
 
         # 检查用户特定限制
@@ -1139,15 +1145,9 @@ class DailyLimitPlugin(star.Star):
             return self.group_limits[str(group_id)]
 
         if group_id:
-            return self.config["limits"].get(
-                "default_group_daily_limit",
-                self.config["limits"].get("default_daily_limit", 20),
-            )
+            return self.config["limits"]["default_group_daily_limit"]
 
-        return self.config["limits"].get(
-            "default_user_daily_limit",
-            self.config["limits"].get("default_daily_limit", 20),
-        )
+        return self.config["limits"]["default_user_daily_limit"]
 
     def _get_usage_by_type(self, user_id=None, group_id=None):
         """通用使用次数获取函数"""
@@ -2884,14 +2884,8 @@ class DailyLimitPlugin(star.Star):
             redis_available_status = "✅ 可用" if redis_available else "❌ 不可用"
 
             # 获取配置信息
-            default_user_limit = self.config["limits"].get(
-                "default_user_daily_limit",
-                self.config["limits"].get("default_daily_limit", 20),
-            )
-            default_group_limit = self.config["limits"].get(
-                "default_group_daily_limit",
-                self.config["limits"].get("default_daily_limit", 20),
-            )
+            default_user_limit = self.config["limits"]["default_user_daily_limit"]
+            default_group_limit = self.config["limits"]["default_group_daily_limit"]
             default_group_mode = self.config["limits"].get(
                 "default_group_mode", "shared"
             )

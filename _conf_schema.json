@@ -48,6 +48,13 @@
                 "group": "群组设置",
                 "hint": "未单独配置的群聊将使用该模式，可选值：shared（共享）或 individual（独立）"
             },
+            "priority_multiplier": {
+                "description": "优先级用户倍数",
+                "type": "float",
+                "default": 2,
+                "group": "用户设置",
+                "hint": "优先级用户在未设置专属 user_limits 时，将使用 默认用户限制 × 倍数"
+            },
             "exempt_users": {
                 "description": "豁免用户ID列表",
                 "type": "list",

@@ -9,6 +9,7 @@
 """
 
 import datetime
+import math
 
 
 class Limiter:
@@ -41,23 +42,29 @@ class Limiter:
     def _get_default_user_limit(self):
         """获取用户场景下的默认限制"""
         limits_config = self.config["limits"]
-        return limits_config.get(
-            "default_user_daily_limit",
-            limits_config.get("default_daily_limit", 20),
-        )
+        return limits_config["default_user_daily_limit"]
 
     def _get_default_group_limit(self):
         """获取群聊场景下的默认限制"""
         limits_config = self.config["limits"]
-        return limits_config.get(
-            "default_group_daily_limit",
-            limits_config.get("default_daily_limit", 20),
-        )
+        return limits_config["default_group_daily_limit"]
 
     def _get_default_group_mode(self):
         """获取群聊默认模式"""
         mode = self.config["limits"].get("default_group_mode", "shared")
         return mode if mode in ["shared", "individual"] else "shared"
+
+    def _get_priority_user_limit(self):
+        """获取优先级用户的默认限制"""
+        default_limit = self._get_default_user_limit()
+        multiplier = self.config["limits"].get("priority_multiplier", 2)
+
+        try:
+            multiplier = float(multiplier)
+        except (TypeError, ValueError):
+            multiplier = 2
+
+        return max(1, math.ceil(default_limit * multiplier))
 
     def get_group_mode(self, group_id):
         """获取群组的模式配置"""
@@ -180,7 +187,7 @@ class Limiter:
             # 优先级用户在任何群聊中只受特定限制，不参与特定群聊限制
             if user_id_str in self.plugin.user_limits:
                 return self.plugin.user_limits[user_id_str]
-            return self._get_default_user_limit()
+            return self._get_priority_user_limit()
 
         # 检查用户特定限制
         if user_id_str in self.plugin.user_limits:

@@ -140,7 +140,9 @@ class ConfigManager:
         """
         required_sections = ["limits", "redis"]
         required_limits_fields = [
-            "default_daily_limit",
+            "default_user_daily_limit",
+            "default_group_daily_limit",
+            "default_group_mode",
             "exempt_users",
             "group_limits",
             "user_limits",

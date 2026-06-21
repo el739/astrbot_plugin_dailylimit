@@ -1120,8 +1120,19 @@ tbody tr:last-child td { border-bottom: none; }
             <div class="modal-body">
                 <form id="configForm">
                     <div class="form-group">
-                        <label for="defaultDailyLimit" data-i18n="label_default_limit">默认每日限制</label>
-                        <input type="number" id="defaultDailyLimit" class="form-input" min="1" max="1000" required>
+                        <label for="defaultUserDailyLimit" data-i18n="label_user_default_limit">默认用户限制</label>
+                        <input type="number" id="defaultUserDailyLimit" class="form-input" min="1" max="1000" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="defaultGroupDailyLimit" data-i18n="label_group_default_limit">默认群聊限制</label>
+                        <input type="number" id="defaultGroupDailyLimit" class="form-input" min="1" max="1000" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="defaultGroupMode" data-i18n="label_default_group_mode">默认群聊模式</label>
+                        <select id="defaultGroupMode" class="form-input">
+                            <option value="shared" data-i18n="mode_shared">共享</option>
+                            <option value="individual" data-i18n="mode_independent">独立</option>
+                        </select>
                     </div>
                     <div class="form-group">
                         <label for="priorityMultiplier" data-i18n="label_priority_multiplier">优先级倍数</label>
@@ -1138,6 +1149,10 @@ tbody tr:last-child td { border-bottom: none; }
                     <div class="form-group">
                         <label for="groupLimits" data-i18n="label_group_limits">群组限制</label>
                         <textarea id="groupLimits" class="form-textarea" rows="4"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="groupModeSettings" data-i18n="label_group_mode_settings">群组模式覆盖</label>
+                        <textarea id="groupModeSettings" class="form-textarea" rows="4"></textarea>
                     </div>
                     <div class="form-group">
                         <label for="userLimits" data-i18n="label_user_limits">用户限制</label>
@@ -1183,9 +1198,10 @@ const I18N = {
         show_requests: '请求数', show_users: '用户数', show_groups: '群组数',
         export: '导出', reset: '重置', save: '保存', cancel: '取消',
         edit_config: '编辑配置', edit_config_title: '编辑配置',
-        label_default_limit: '默认每日限制', label_priority_multiplier: '优先级倍数',
+        label_user_default_limit: '默认用户限制', label_group_default_limit: '默认群聊限制',
+        label_default_group_mode: '默认群聊模式', label_priority_multiplier: '优先级倍数',
         label_exempt_users: '豁免用户（每行一个）', label_priority_users: '优先用户（每行一个）',
-        label_group_limits: '群组限制', label_user_limits: '用户限制',
+        label_group_limits: '群组限制', label_group_mode_settings: '群组模式覆盖', label_user_limits: '用户限制',
         label_skip_patterns: '跳过模式（每行一个）', label_reset_time: '每日重置时间',
         search_user: '搜索用户 ID...', search_group: '搜索群组 ID...',
         all_status: '全部状态', all_usage: '全部用量', all_modes: '全部模式',
@@ -1201,12 +1217,12 @@ const I18N = {
         label_total_users: '总用户', label_total_groups: '总群组',
         unlimited: '无限', shared: '共享', independent: '独立',
         danger: '危险', warning: '警告', normal: '正常',
-        config_general: '通用', config_default_limit: '默认限制', config_reset_time: '重置时间',
+        config_general: '通用', config_user_default_limit: '用户默认限制', config_group_default_limit: '群聊默认限制', config_default_group_mode: '默认群聊模式', config_reset_time: '重置时间',
         config_priority_multiplier: '优先级倍数', config_skip_patterns: '跳过模式',
         config_exempt_users: '豁免用户', config_priority_users: '优先用户',
-        config_group_limits: '群组限制', config_user_limits: '用户限制',
+        config_group_limits: '群组限制', config_group_mode_settings: '群组模式覆盖', config_user_limits: '用户限制',
         no_exempt_users: '无豁免用户', no_priority_users: '无优先用户',
-        groups_have_limits: '{count} 个群组有自定义限制', users_have_limits: '{count} 个用户有自定义限制',
+        groups_have_limits: '{count} 个群组有自定义限制', groups_have_mode_overrides: '{count} 个群组有模式覆盖', users_have_limits: '{count} 个用户有自定义限制',
         none: '无', dark_mode: '深色模式', light_mode: '浅色模式',
         trend_total_requests: '总请求', trend_active_users: '活跃用户', trend_active_groups: '活跃群组',
         trend_period_info: '周期信息', trend_avg: '均值', trend_peak: '峰值', trend_min: '最低', trend_total: '总计',
@@ -1230,9 +1246,10 @@ const I18N = {
         show_requests: 'Requests', show_users: 'Users', show_groups: 'Groups',
         export: 'Export', reset: 'Reset', save: 'Save', cancel: 'Cancel',
         edit_config: 'Edit Config', edit_config_title: 'Edit Configuration',
-        label_default_limit: 'Default Daily Limit', label_priority_multiplier: 'Priority Multiplier',
+        label_user_default_limit: 'Default User Limit', label_group_default_limit: 'Default Group Limit',
+        label_default_group_mode: 'Default Group Mode', label_priority_multiplier: 'Priority Multiplier',
         label_exempt_users: 'Exempt Users (one per line)', label_priority_users: 'Priority Users (one per line)',
-        label_group_limits: 'Group Limits', label_user_limits: 'User Limits',
+        label_group_limits: 'Group Limits', label_group_mode_settings: 'Group Mode Overrides', label_user_limits: 'User Limits',
         label_skip_patterns: 'Skip Patterns (one per line)', label_reset_time: 'Daily Reset Time',
         search_user: 'Search user ID...', search_group: 'Search group ID...',
         all_status: 'All Status', all_usage: 'All Usage', all_modes: 'All Modes',
@@ -1248,12 +1265,12 @@ const I18N = {
         label_total_users: 'Total Users', label_total_groups: 'Total Groups',
         unlimited: 'Unlimited', shared: 'Shared', independent: 'Independent',
         danger: 'Danger', warning: 'Warning', normal: 'Normal',
-        config_general: 'General', config_default_limit: 'Default Limit', config_reset_time: 'Reset Time',
+        config_general: 'General', config_user_default_limit: 'Default User Limit', config_group_default_limit: 'Default Group Limit', config_default_group_mode: 'Default Group Mode', config_reset_time: 'Reset Time',
         config_priority_multiplier: 'Priority Multiplier', config_skip_patterns: 'Skip Patterns',
         config_exempt_users: 'Exempt Users', config_priority_users: 'Priority Users',
-        config_group_limits: 'Group Limits', config_user_limits: 'User Limits',
+        config_group_limits: 'Group Limits', config_group_mode_settings: 'Group Mode Overrides', config_user_limits: 'User Limits',
         no_exempt_users: 'No exempt users', no_priority_users: 'No priority users',
-        groups_have_limits: '{count} group(s) have custom limits', users_have_limits: '{count} user(s) have custom limits',
+        groups_have_limits: '{count} group(s) have custom limits', groups_have_mode_overrides: '{count} group(s) have mode overrides', users_have_limits: '{count} user(s) have custom limits',
         none: 'None', dark_mode: 'Dark Mode', light_mode: 'Light Mode',
         trend_total_requests: 'Total Requests', trend_active_users: 'Active Users', trend_active_groups: 'Active Groups',
         trend_period_info: 'Period Info', trend_avg: 'Avg', trend_peak: 'Peak', trend_min: 'Min', trend_total: 'Total',
@@ -1461,13 +1478,16 @@ async function loadConfig() {
     if (!response.data.success) throw new Error(response.data.error);
     const config = response.data.data;
     const groupCount = config.group_limits ? config.group_limits.trim().split('\n').filter(l => l.trim()).length : 0;
+    const groupModeCount = config.group_mode_settings ? config.group_mode_settings.trim().split('\n').filter(l => l.trim()).length : 0;
     const userCount = config.user_limits ? config.user_limits.trim().split('\n').filter(l => l.trim()).length : 0;
     const el = document.getElementById('configContent');
     if (el) {
         el.innerHTML = `<div class="config-grid">
             <div class="config-card" style="border-left-color:var(--color-primary);">
                 <h4><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg> ${t('config_general')}</h4>
-                <p><strong>${t('config_default_limit')}:</strong> ${config.default_daily_limit}</p>
+                <p><strong>${t('config_user_default_limit')}:</strong> ${config.default_user_daily_limit}</p>
+                <p><strong>${t('config_group_default_limit')}:</strong> ${config.default_group_daily_limit}</p>
+                <p><strong>${t('config_default_group_mode')}:</strong> ${config.default_group_mode === 'shared' ? t('shared') : t('independent')}</p>
                 <p><strong>${t('config_reset_time')}:</strong> ${config.reset_time || '00:00'}</p>
                 <p><strong>${t('config_priority_multiplier')}:</strong> ${config.priority_multiplier || 2}x</p>
                 <p><strong>${t('config_skip_patterns')}:</strong> ${config.skip_patterns.join(', ') || t('none')}</p>
@@ -1483,6 +1503,7 @@ async function loadConfig() {
             <div class="config-card" style="border-left-color:var(--color-info);">
                 <h4><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg> ${t('config_group_limits')}</h4>
                 <p>${t('groups_have_limits').replace('{count}', groupCount)}</p>
+                <p>${t('groups_have_mode_overrides').replace('{count}', groupModeCount)}</p>
             </div>
             <div class="config-card" style="border-left-color:var(--color-warning);">
                 <h4><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle></svg> ${t('config_user_limits')}</h4>
@@ -1756,11 +1777,14 @@ async function loadConfigToForm() {
     const res = await axios.get('/api/config');
     if (!res.data.success) throw new Error(res.data.error);
     currentConfig = res.data.data;
-    document.getElementById('defaultDailyLimit').value = currentConfig.default_daily_limit;
+    document.getElementById('defaultUserDailyLimit').value = currentConfig.default_user_daily_limit;
+    document.getElementById('defaultGroupDailyLimit').value = currentConfig.default_group_daily_limit;
+    document.getElementById('defaultGroupMode').value = currentConfig.default_group_mode || 'shared';
     document.getElementById('priorityMultiplier').value = currentConfig.priority_multiplier || 2;
     document.getElementById('exemptUsers').value = currentConfig.exempt_users.join('\n');
     document.getElementById('priorityUsers').value = currentConfig.priority_users ? currentConfig.priority_users.join('\n') : '';
     document.getElementById('groupLimits').value = currentConfig.group_limits;
+    document.getElementById('groupModeSettings').value = currentConfig.group_mode_settings || '';
     document.getElementById('userLimits').value = currentConfig.user_limits;
     document.getElementById('skipPatterns').value = currentConfig.skip_patterns.join('\n');
     document.getElementById('resetTime').value = currentConfig.reset_time || '00:00';
@@ -1769,16 +1793,20 @@ async function loadConfigToForm() {
 async function saveConfig() {
     try {
         const data = {
-            default_daily_limit: parseInt(document.getElementById('defaultDailyLimit').value),
+            default_user_daily_limit: parseInt(document.getElementById('defaultUserDailyLimit').value),
+            default_group_daily_limit: parseInt(document.getElementById('defaultGroupDailyLimit').value),
+            default_group_mode: document.getElementById('defaultGroupMode').value,
             priority_multiplier: parseFloat(document.getElementById('priorityMultiplier').value),
             exempt_users: document.getElementById('exemptUsers').value.split('\n').map(l => l.trim()).filter(l => l),
             priority_users: document.getElementById('priorityUsers').value.split('\n').map(l => l.trim()).filter(l => l),
             group_limits: document.getElementById('groupLimits').value,
+            group_mode_settings: document.getElementById('groupModeSettings').value,
             user_limits: document.getElementById('userLimits').value,
             skip_patterns: document.getElementById('skipPatterns').value.split('\n').map(l => l.trim()).filter(l => l),
             reset_time: document.getElementById('resetTime').value
         };
-        if (data.default_daily_limit < 1 || data.default_daily_limit > 1000) throw new Error(t('validation_limit_range'));
+        if (data.default_user_daily_limit < 1 || data.default_user_daily_limit > 1000) throw new Error(t('validation_limit_range'));
+        if (data.default_group_daily_limit < 1 || data.default_group_daily_limit > 1000) throw new Error(t('validation_limit_range'));
         if (data.priority_multiplier < 1 || data.priority_multiplier > 10) throw new Error(t('validation_multiplier_range'));
         const validateIds = (ids, name) => { for (const id of ids) { if (!/^\d+$/.test(id)) throw new Error(t('validation_invalid_id').replace('{name}', name).replace('{id}', id)); } };
         validateIds(data.exempt_users, 'Exempt users');

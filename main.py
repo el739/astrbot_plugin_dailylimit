@@ -1125,8 +1125,10 @@ class DailyLimitPlugin(star.Star):
             # 优先级用户在任何群聊中只受特定限制，不参与特定群聊限制
             if user_id_str in self.user_limits:
                 return self.user_limits[user_id_str]
-            else:
-                return self.config["limits"]["default_daily_limit"]
+            return self.config["limits"].get(
+                "default_user_daily_limit",
+                self.config["limits"].get("default_daily_limit", 20),
+            )
 
         # 检查用户特定限制
         if user_id_str in self.user_limits:
@@ -1136,8 +1138,16 @@ class DailyLimitPlugin(star.Star):
         if group_id and str(group_id) in self.group_limits:
             return self.group_limits[str(group_id)]
 
-        # 返回默认限制
-        return self.config["limits"]["default_daily_limit"]
+        if group_id:
+            return self.config["limits"].get(
+                "default_group_daily_limit",
+                self.config["limits"].get("default_daily_limit", 20),
+            )
+
+        return self.config["limits"].get(
+            "default_user_daily_limit",
+            self.config["limits"].get("default_daily_limit", 20),
+        )
 
     def _get_usage_by_type(self, user_id=None, group_id=None):
         """通用使用次数获取函数"""
@@ -1864,9 +1874,9 @@ class DailyLimitPlugin(star.Star):
             "2️⃣ 🏆 豁免用户 - 完全不受限制（白名单用户）\n"
             "3️⃣ 👤 用户特定限制 - 针对单个用户的个性化设置\n"
             "4️⃣ 👥 群组特定限制 - 针对整个群组的统一设置\n"
-            "5️⃣ ⚙️ 默认限制 - 全局默认设置（兜底规则）\n\n"
+            "5️⃣ ⚙️ 默认限制 - 用户默认/群聊默认的兜底规则\n\n"
             "📊 使用模式说明：\n"
-            "• 🔄 共享模式：群组内所有成员共享使用次数（默认模式）\n"
+            "• 🔄 共享模式：群组内所有成员共享使用次数（可设为默认模式）\n"
             "   └── 适合小型团队协作，统一管理使用次数\n"
             "• 👤 独立模式：群组内每个成员有独立的使用次数\n"
             "   └── 适合大型团队，成员间互不影响\n\n"
@@ -2874,7 +2884,17 @@ class DailyLimitPlugin(star.Star):
             redis_available_status = "✅ 可用" if redis_available else "❌ 不可用"
 
             # 获取配置信息
-            default_limit = self.config["limits"]["default_daily_limit"]
+            default_user_limit = self.config["limits"].get(
+                "default_user_daily_limit",
+                self.config["limits"].get("default_daily_limit", 20),
+            )
+            default_group_limit = self.config["limits"].get(
+                "default_group_daily_limit",
+                self.config["limits"].get("default_daily_limit", 20),
+            )
+            default_group_mode = self.config["limits"].get(
+                "default_group_mode", "shared"
+            )
             exempt_users_count = len(self.config["limits"]["exempt_users"])
             group_limits_count = len(self.group_limits)
             user_limits_count = len(self.user_limits)
@@ -2906,7 +2926,9 @@ class DailyLimitPlugin(star.Star):
                 f"📊 Redis连接状态: {redis_status}\n"
                 f"🔌 Redis可用性: {redis_available_status}\n\n"
                 f"⚙️ 配置信息:\n"
-                f"• 默认限制: {default_limit} 次/天\n"
+                f"• 用户默认限制: {default_user_limit} 次/天\n"
+                f"• 群聊默认限制: {default_group_limit} 次/天\n"
+                f"• 默认群聊模式: {'共享' if default_group_mode == 'shared' else '独立'}\n"
                 f"• 豁免用户数: {exempt_users_count} 个\n"
                 f"• 群组限制数: {group_limits_count} 个\n"
                 f"• 用户限制数: {user_limits_count} 个\n\n"

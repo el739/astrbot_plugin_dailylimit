@@ -789,19 +789,29 @@ class WebServer:
     def _get_config_data(self):
         """获取配置数据"""
         config = self.plugin.config
+        limits_config = config["limits"]
 
         return {
-            "default_daily_limit": config["limits"]["default_daily_limit"],
-            "exempt_users": config["limits"]["exempt_users"],
-            "priority_users": config["limits"].get(
-                "priority_users", []
-            ),  # 添加优先级用户字段
-            "group_limits": config["limits"]["group_limits"],
-            "user_limits": config["limits"]["user_limits"],
-            "group_mode_settings": config["limits"]["group_mode_settings"],
-            "time_period_limits": config["limits"]["time_period_limits"],
-            "skip_patterns": config["limits"]["skip_patterns"],
-            "custom_messages": config["limits"].get("custom_messages", {}),
+            "default_daily_limit": limits_config.get("default_daily_limit", 20),
+            "default_user_daily_limit": limits_config.get(
+                "default_user_daily_limit",
+                limits_config.get("default_daily_limit", 20),
+            ),
+            "default_group_daily_limit": limits_config.get(
+                "default_group_daily_limit",
+                limits_config.get("default_daily_limit", 20),
+            ),
+            "default_group_mode": limits_config.get("default_group_mode", "shared"),
+            "exempt_users": limits_config["exempt_users"],
+            "priority_users": limits_config.get("priority_users", []),
+            "group_limits": limits_config["group_limits"],
+            "user_limits": limits_config["user_limits"],
+            "group_mode_settings": limits_config.get("group_mode_settings", ""),
+            "time_period_limits": limits_config["time_period_limits"],
+            "skip_patterns": limits_config["skip_patterns"],
+            "custom_messages": limits_config.get("custom_messages", {}),
+            "priority_multiplier": limits_config.get("priority_multiplier", 2),
+            "reset_time": limits_config.get("daily_reset_time", "00:00"),
             "redis_config": config["redis"],
         }
 
@@ -818,22 +828,39 @@ class WebServer:
         if not isinstance(config_data, dict):
             raise ValueError("配置数据格式错误")
 
-    def _update_default_daily_limit(self, config_data):
-        """
-        更新默认每日限制
+    def _update_default_limit(self, config_data, config_key, display_name):
+        """更新单个默认限制配置"""
+        if config_key not in config_data:
+            return
 
-        参数：
-            config_data (dict): 配置数据
+        new_limit = config_data[config_key]
+        if isinstance(new_limit, int) and new_limit > 0:
+            self.plugin.config["limits"][config_key] = new_limit
+            return
 
-        异常：
-            ValueError: 配置值无效时抛出
-        """
-        if "default_daily_limit" in config_data:
-            new_limit = config_data["default_daily_limit"]
-            if isinstance(new_limit, int) and new_limit > 0:
-                self.plugin.config["limits"]["default_daily_limit"] = new_limit
-            else:
-                raise ValueError("默认每日限制必须是大于0的整数")
+        raise ValueError(f"{display_name}必须是大于0的整数")
+
+    def _update_default_limits(self, config_data):
+        """更新默认限制配置"""
+        self._update_default_limit(config_data, "default_daily_limit", "默认每日限制")
+        self._update_default_limit(
+            config_data, "default_user_daily_limit", "默认用户每日限制"
+        )
+        self._update_default_limit(
+            config_data, "default_group_daily_limit", "默认群聊每日限制"
+        )
+
+    def _update_default_group_mode(self, config_data):
+        """更新默认群组模式配置"""
+        if "default_group_mode" not in config_data:
+            return
+
+        mode = config_data["default_group_mode"]
+        if mode in ["shared", "individual"]:
+            self.plugin.config["limits"]["default_group_mode"] = mode
+            return
+
+        raise ValueError("默认群聊模式必须是 shared 或 individual")
 
     def _update_user_list(self, config_data, list_name, config_key):
         """
@@ -991,8 +1018,8 @@ class WebServer:
         参数：
             config_data (dict): 新的配置数据
         """
-        # 更新默认每日限制
-        self._update_default_daily_limit(config_data)
+        self._update_default_limits(config_data)
+        self._update_default_group_mode(config_data)
 
         # 更新用户列表
         self._update_user_list(config_data, "exempt_users", "exempt_users")
@@ -1007,6 +1034,13 @@ class WebServer:
         ]
         for config_key in string_configs:
             self._update_string_config(config_data, config_key)
+
+        if "reset_time" in config_data:
+            reset_time = config_data["reset_time"]
+            if isinstance(reset_time, str) and reset_time.strip():
+                self.plugin.config["limits"]["daily_reset_time"] = reset_time.strip()
+            else:
+                raise ValueError("每日重置时间必须是非空字符串")
 
         # 更新列表类型的配置
         self._update_list_config(config_data, "skip_patterns")

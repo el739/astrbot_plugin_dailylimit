@@ -34,12 +34,14 @@ class ConfigLoader:
         返回：
             bool: 加载成功返回True，失败返回False
         """
+        self.reset_runtime_limit_config()
         self.parse_group_limits()
         self.parse_user_limits()
         self.parse_group_modes()
         self.parse_time_period_limits()
         self.load_skip_patterns()
         self.validate_daily_reset_time()
+        self.sync_runtime_limit_config()
 
         self.logger.log_info(
             "已加载 {} 个群组限制、{} 个用户限制、{} 个群组模式配置、{} 个时间段限制和{} 个忽略模式",
@@ -52,6 +54,26 @@ class ConfigLoader:
 
         # 加载安全配置
         self.load_security_config()
+
+    def reset_runtime_limit_config(self):
+        """重置运行时限制配置，避免重新加载后残留旧数据"""
+        self.plugin.group_limits.clear()
+        self.plugin.user_limits.clear()
+        self.plugin.group_modes.clear()
+        self.plugin.time_period_limits.clear()
+        self.plugin.skip_patterns = []
+
+    def sync_runtime_limit_config(self):
+        """同步运行时配置到其他核心模块"""
+        if hasattr(self.plugin, "config_mgr") and self.plugin.config_mgr:
+            self.plugin.config_mgr.group_limits = self.plugin.group_limits
+            self.plugin.config_mgr.user_limits = self.plugin.user_limits
+            self.plugin.config_mgr.group_modes = self.plugin.group_modes
+            self.plugin.config_mgr.time_period_limits = self.plugin.time_period_limits
+            self.plugin.config_mgr.skip_patterns = self.plugin.skip_patterns
+
+        if hasattr(self.plugin, "time_period_mgr") and self.plugin.time_period_mgr:
+            self.plugin.time_period_mgr.time_period_limits = self.plugin.time_period_limits
 
     def parse_limits_config(
         self, config_key: str, limits_dict: dict, limit_type: str
@@ -128,7 +150,9 @@ class ConfigLoader:
         """
         required_sections = ["limits", "redis"]
         required_limits_fields = [
-            "default_daily_limit",
+            "default_user_daily_limit",
+            "default_group_daily_limit",
+            "default_group_mode",
             "exempt_users",
             "group_limits",
             "user_limits",
@@ -239,7 +263,8 @@ class ConfigLoader:
     def parse_time_period_limits(self):
         """解析时间段限制配置"""
         if hasattr(self.plugin, "time_period_mgr"):
-            self.plugin.time_period_mgr.parse_time_period_limits()
+            parsed_limits = self.plugin.time_period_mgr.parse_time_period_limits()
+            self.plugin.time_period_limits.extend(parsed_limits)
         else:
             # 兼容旧代码：直接在插件中处理
             time_period_config = self.config["limits"].get("time_period_limits", [])

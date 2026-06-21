@@ -143,7 +143,7 @@ AstrBot 日调用限制插件是专为AstrBot设计的AI资源管理工具，通
 2. 豁免用户 - 完全不受限制
 3. 用户特定限制 - 针对单个用户
 4. 群组特定限制 - 针对整个群组
-5. 默认限制 - 全局默认设置
+5. 默认限制 - 用户默认/群聊默认兜底设置
 
 ---
 
@@ -186,7 +186,9 @@ AstrBot 日调用限制插件是专为AstrBot设计的AI资源管理工具，通
     "password": ""
   },
   "limits": {
-    "default_daily_limit": 20,
+    "default_user_daily_limit": 20,
+    "default_group_daily_limit": 20,
+    "default_group_mode": "shared",
     "exempt_users": [],
     "group_limits": "",
     "user_limits": "",
@@ -229,7 +231,9 @@ Redis是插件的数据存储后端，必须正确配置才能正常运行。
 ### 限制规则配置
 
 #### 默认限制设置
-- `default_daily_limit`: 默认每日调用次数（默认：20次）
+- `default_user_daily_limit`: 用户场景默认每日调用次数（默认：20次）
+- `default_group_daily_limit`: 群聊场景默认每日调用次数（默认：20次）
+- `default_group_mode`: 未单独配置群聊时的默认模式，`shared` 或 `individual`
 
 #### 豁免用户列表
 - `exempt_users`: 不受限制的用户ID列表（JSON数组格式）
@@ -256,6 +260,7 @@ Redis是插件的数据存储后端，必须正确配置才能正常运行。
 
 #### 群组模式配置
 **格式：** `群组ID:模式类型`
+未出现在这里的群聊会使用 `default_group_mode`。
 **模式类型：**
 - `shared` - 共享模式（群组成员共享使用次数）
 - `individual` - 独立模式（群组内每个成员独立计数）

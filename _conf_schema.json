@@ -29,11 +29,24 @@
         "description": "限制配置",
         "type": "object",
         "items": {
-            "default_daily_limit": {
-                "description": "默认每日限制次数",
+            "default_user_daily_limit": {
+                "description": "默认用户每日限制次数",
                 "type": "int",
                 "default": 20,
                 "group": "基础设置"
+            },
+            "default_group_daily_limit": {
+                "description": "默认群聊每日限制次数",
+                "type": "int",
+                "default": 20,
+                "group": "群组设置"
+            },
+            "default_group_mode": {
+                "description": "默认群聊模式",
+                "type": "string",
+                "default": "shared",
+                "group": "群组设置",
+                "hint": "未单独配置的群聊将使用该模式，可选值：shared（共享）或 individual（独立）"
             },
             "exempt_users": {
                 "description": "豁免用户ID列表",
@@ -57,11 +70,11 @@
                 "hint": "格式为：群组ID:每日限制次数，一行一个（使用指令/sid查看ID）\n示例：\n123456:50\n789012:30\n345678:100"
             },
             "group_mode_settings": {
-                "description": "群组模式配置",
+                "description": "群组模式覆盖配置",
                 "type": "text",
                 "default": "",
                 "group": "群组设置",
-                "hint": "格式为：群组ID:模式(shared或individual)，一行一个\n示例：\n123456:shared\n789012:individual\n345678:shared"
+                "hint": "格式为：群组ID:模式(shared或individual)，一行一个；仅用于覆盖默认群聊模式\n示例：\n123456:shared\n789012:individual\n345678:shared"
             },
             "user_limits": {
                 "description": "特定用户限制",

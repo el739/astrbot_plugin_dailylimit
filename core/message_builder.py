@@ -150,11 +150,12 @@ class MessageBuilder:
     def get_limit_type(self, user_id, group_id):
         """获取限制类型描述"""
         if str(user_id) in self.plugin.user_limits:
-            return "特定限制"
-        elif group_id and str(group_id) in self.plugin.group_limits:
-            return "群组限制"
-        else:
-            return "默认限制"
+            return "用户特定限制"
+        if group_id and str(group_id) in self.plugin.group_limits:
+            return "群组特定限制"
+        if group_id is not None:
+            return "群聊默认限制"
+        return "用户默认限制"
 
     def get_current_time_period_info(self, current_time_str):
         """获取当前时间段信息"""
@@ -208,7 +209,11 @@ class MessageBuilder:
         remaining_text = f"\n🎯 剩余次数：{remaining} 次" if show_remaining else ""
 
         usage_tip = self.get_usage_tip(remaining, limit)
-        limit_type = "特定限制" if str(group_id) in self.plugin.group_limits else "默认限制"
+        limit_type = (
+            "群组特定限制"
+            if str(group_id) in self.plugin.group_limits
+            else "群聊默认限制"
+        )
 
         # 构建消息模板
         base_template = (

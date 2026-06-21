@@ -28,15 +28,36 @@ class Limiter:
 
     def should_skip_message(self, message_str):
         """检查消息是否应该忽略处理"""
-        if not message_str or not self.config_mgr.skip_patterns:
+        if not message_str or not self.plugin.skip_patterns:
             return False
 
         # 检查消息是否以任何忽略模式开头
-        for pattern in self.config_mgr.skip_patterns:
+        for pattern in self.plugin.skip_patterns:
             if message_str.startswith(pattern):
                 return True
 
         return False
+
+    def _get_default_user_limit(self):
+        """获取用户场景下的默认限制"""
+        limits_config = self.config["limits"]
+        return limits_config.get(
+            "default_user_daily_limit",
+            limits_config.get("default_daily_limit", 20),
+        )
+
+    def _get_default_group_limit(self):
+        """获取群聊场景下的默认限制"""
+        limits_config = self.config["limits"]
+        return limits_config.get(
+            "default_group_daily_limit",
+            limits_config.get("default_daily_limit", 20),
+        )
+
+    def _get_default_group_mode(self):
+        """获取群聊默认模式"""
+        mode = self.config["limits"].get("default_group_mode", "shared")
+        return mode if mode in ["shared", "individual"] else "shared"
 
     def get_group_mode(self, group_id):
         """获取群组的模式配置"""
@@ -44,11 +65,10 @@ class Limiter:
             return "individual"  # 私聊默认为独立模式
 
         # 检查是否有特定群组模式配置
-        if str(group_id) in self.config_mgr.group_modes:
-            return self.config_mgr.group_modes[str(group_id)]
+        if str(group_id) in self.plugin.group_modes:
+            return self.plugin.group_modes[str(group_id)]
 
-        # 默认使用共享模式（保持向后兼容性）
-        return "shared"
+        return self._get_default_group_mode()
 
     def parse_time_string(self, time_str):
         """解析时间字符串为时间对象"""
@@ -78,7 +98,7 @@ class Limiter:
         """获取当前时间段适用的限制"""
         current_time_str = datetime.datetime.now().strftime("%H:%M")
 
-        for time_limit in self.config_mgr.time_period_limits:
+        for time_limit in self.plugin.time_period_limits:
             if self.is_in_time_period(
                 current_time_str, time_limit["start_time"], time_limit["end_time"]
             ):
@@ -91,7 +111,7 @@ class Limiter:
         if time_period_id is None:
             # 如果没有指定时间段ID，使用当前时间段
             current_time_str = datetime.datetime.now().strftime("%H:%M")
-            for i, time_limit in enumerate(self.config_mgr.time_period_limits):
+            for i, time_limit in enumerate(self.plugin.time_period_limits):
                 if self.is_in_time_period(
                     current_time_str, time_limit["start_time"], time_limit["end_time"]
                 ):
@@ -158,21 +178,22 @@ class Limiter:
         # 检查用户是否为优先级用户（优先级第三）
         if user_id_str in self.config["limits"].get("priority_users", []):
             # 优先级用户在任何群聊中只受特定限制，不参与特定群聊限制
-            if user_id_str in self.config_mgr.user_limits:
-                return self.config_mgr.user_limits[user_id_str]
-            else:
-                return self.config["limits"]["default_daily_limit"]
+            if user_id_str in self.plugin.user_limits:
+                return self.plugin.user_limits[user_id_str]
+            return self._get_default_user_limit()
 
         # 检查用户特定限制
-        if user_id_str in self.config_mgr.user_limits:
-            return self.config_mgr.user_limits[user_id_str]
+        if user_id_str in self.plugin.user_limits:
+            return self.plugin.user_limits[user_id_str]
 
         # 检查群组特定限制
-        if group_id and str(group_id) in self.config_mgr.group_limits:
-            return self.config_mgr.group_limits[str(group_id)]
+        if group_id and str(group_id) in self.plugin.group_limits:
+            return self.plugin.group_limits[str(group_id)]
 
-        # 返回默认限制
-        return self.config["limits"]["default_daily_limit"]
+        if group_id:
+            return self._get_default_group_limit()
+
+        return self._get_default_user_limit()
 
     def _get_reset_period_date(self):
         """获取重置周期的日期字符串"""
